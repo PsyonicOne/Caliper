@@ -9,22 +9,17 @@ from bpy.props import (
 from bpy.types import PropertyGroup, AddonPreferences
 
 bl_info = {
-    "name": "Caliper — Measure Tool",
+    "name": "Caliper",
     "author": "Ash",
     "version": (1, 0, 0),
     "blender": (4, 0, 0),
     "location": "View3D > Sidebar > Caliper",
-    "description": "CAD-style distance and angle measurement tool with auto-detected circle snapping, X/Y/Z axis deltas, and screen-space readouts.",
+    "description": "Modern CAD-style distance and angle measurement tool with auto-detected circle snapping, X/Y/Z axis deltas, and screen-space readouts.",
     "category": "3D View",
 }
 
 
 # ── Scene property group ──
-#
-# The original CADView addon stored its preferences on a Scene-level
-# PropertyGroup called `CADView_props`. The measure tool reads/writes
-# these on every modal frame to keep the header dropdowns and the
-# modal handler in sync, so we recreate the same shape here.
 
 _MEASURE_MODE_ITEMS = (
     ("distance", "Distance", "Measure distance between two points (auto-detects circles)"),
@@ -75,16 +70,6 @@ class CaliperSceneProperties(PropertyGroup):
 
 
 # ── Addon preferences ──
-#
-# Surfaces the launch hotkey and the in-modal hotkeys inside the
-# addon's own Preferences panel so the user doesn't have to dig into
-# Preferences > Keymap to discover them.
-#
-# Blender doesn't expose a stable API for "rebind this keymap item
-# from within AddonPreferences", so we display the current binding
-# (and the raw keymap entry) and instruct the user to use the
-# Keymap tab if they want to change it. The keymap item is still
-# there — just editable through the standard UI.
 
 class CaliperAddonPreferences(AddonPreferences):
     bl_idname = __name__  # "Caliper" / "Caliper.<something>" — matched by Blender
@@ -93,7 +78,7 @@ class CaliperAddonPreferences(AddonPreferences):
     # it back from the registered keymap to show the current binding.
     launch_key: StringProperty(
         name="Launch Hotkey",
-        description="Current key that launches the Measure operator (edit via Preferences > Keymap > 3D View > 'Measure (Caliper)')",
+        description="Current key that launches the Caliper operator (edit via Preferences > Keymap > 3D View > 'Caliper'",
         default="Alt+M",
     )
 
@@ -120,7 +105,7 @@ class CaliperAddonPreferences(AddonPreferences):
 
 
 # Operator + scene property access — assigned at register() time so the
-# measure module can be imported (and statically checked) without
+# caliper module can be imported (and statically checked) without
 # triggering Blender's registration machinery.
 _CALIPER_CLASSES = ()  # populated in register()
 
@@ -130,7 +115,7 @@ _ADDON_KEYMAPS = []
 
 
 def _register_keymap():
-    """Install the default 'M' keymap for the Measure operator.
+    """Install the default 'M' keymap for the Caliper operator.
 
     Bound to the 3D View keyconfig. Returns nothing — the keymap is
     remembered in `_ADDON_KEYMAPS` so unregister can find it.
@@ -141,7 +126,13 @@ def _register_keymap():
         # Headless / background contexts don't have an addon keyconfig.
         return
     km = kc.keymaps.new(name="3D View", space_type="VIEW_3D")
-    kmi = km.keymap_items.new("cad_view.measure", "M", "PRESS", alt=True)
+    kmi = km.keymap_items.new("caliper.measure", "M", "PRESS", alt=True)
+    # Override the Keymap UI label — by default Blender shows the
+    # operator's bl_label ("Measure"), which is misleading when several
+    # Measure-style operators share the same 3D View keymap slot.
+    # KeyMapItem.name, when set, takes precedence over the operator's
+    # bl_label in the Preferences > Keymap UI.
+    kmi.name = "Caliper"
     _ADDON_KEYMAPS.append((km, kmi))
 
 
@@ -159,17 +150,17 @@ def register():
     global _CALIPER_CLASSES
 
     # Property group first — the operator's modal handler reads
-    # `context.scene.CADView_props` on every event, so the PointerProperty
+    # `context.scene.caliper_props` on every event, so the PointerProperty
     # must exist before the operator is registered.
     bpy.utils.register_class(CaliperSceneProperties)
-    bpy.types.Scene.CADView_props = PointerProperty(type=CaliperSceneProperties)
+    bpy.types.Scene.caliper_props = PointerProperty(type=CaliperSceneProperties)
 
     # Addon preferences next — pure UI, no runtime dependencies.
     bpy.utils.register_class(CaliperAddonPreferences)
 
-    # Operator last — its invoke() reads from `context.scene.CADView_props`.
-    from . import measure as _measure
-    bpy.utils.register_class(_measure.CAD_VIEW_OT_measure)
+    # Operator last — its invoke() reads from `context.scene.caliper_props`.
+    from . import caliper as _caliper
+    bpy.utils.register_class(_caliper.CALIPER_OT_measure)
 
     # Sidebar panel
     from . import panel as _panel
@@ -181,7 +172,7 @@ def register():
     _CALIPER_CLASSES = (
         CaliperSceneProperties,
         CaliperAddonPreferences,
-        _measure.CAD_VIEW_OT_measure,
+        _caliper.CALIPER_OT_measure,
         _panel.CALIPER_PT_main,
     )
 
@@ -201,9 +192,9 @@ def unregister():
             pass
 
     # Drop the Scene pointer so a re-register starts clean.
-    if hasattr(bpy.types.Scene, "CADView_props"):
+    if hasattr(bpy.types.Scene, "caliper_props"):
         try:
-            del bpy.types.Scene.CADView_props
+            del bpy.types.Scene.caliper_props
         except (AttributeError, RuntimeError):
             pass
 

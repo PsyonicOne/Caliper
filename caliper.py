@@ -17,9 +17,9 @@ from .common import handlers
 _BVH_OBJECT_CACHE = {}
 
 
-class CAD_VIEW_OT_measure(Operator):
-    bl_idname = "cad_view.measure"
-    bl_label = "Measure"
+class CALIPER_OT_measure(Operator):
+    bl_idname = "caliper.measure"
+    bl_label = "Caliper"
     bl_description = "Measure Distance or Angle (auto-detects circles)"
     bl_space_type = "VIEW_3D"
     bl_region_type = "WINDOW"
@@ -41,7 +41,7 @@ class CAD_VIEW_OT_measure(Operator):
         return context.area.type == "VIEW_3D"
 
     def invoke(self, context, event):
-        props = context.scene.CADView_props
+        props = context.scene.caliper_props
         self.mode = props.measure_mode
         self.selection_mode = props.selection_mode
         self.measurement_phase = 'idle'  # 'idle', 'first_selected', 'complete'
@@ -93,7 +93,7 @@ class CAD_VIEW_OT_measure(Operator):
         context.area.header_text_set(
             "Distance Mode (auto-detects circles in face/edge) | LMB: Select (SHIFT: no circle) | RMB: Cancel | D: Distance | A: Angle | 1/2/3: Selection")
 
-        self.props = context.scene.CADView_props
+        self.props = context.scene.caliper_props
         if self.props.path_tol is not None:
             self.path_tolerance = self.props.path_tol
         if self.props.circle_tol is not None:
@@ -1631,7 +1631,7 @@ class CAD_VIEW_OT_measure(Operator):
             return {"PASS_THROUGH"}
 
         # Sync operator state with scene properties (header dropdowns)
-        props = context.scene.CADView_props
+        props = context.scene.caliper_props
         old_mode = self.mode
         old_selection = self.selection_mode
         self.mode = props.measure_mode
@@ -1702,7 +1702,7 @@ class CAD_VIEW_OT_measure(Operator):
         # ── Key presses for mode/selection switching ──
         if event.type == 'D' and event.value == 'PRESS':
             self.mode = 'distance'
-            context.scene.CADView_props.measure_mode = 'distance'
+            context.scene.caliper_props.measure_mode = 'distance'
             self._clear_measurement()
             self._clear_highlight()
             self._clear_selected_highlight()
@@ -1719,10 +1719,10 @@ class CAD_VIEW_OT_measure(Operator):
 
         if event.type == 'A' and event.value == 'PRESS':
             self.mode = 'angle'
-            context.scene.CADView_props.measure_mode = 'angle'
+            context.scene.caliper_props.measure_mode = 'angle'
             if self.selection_mode == 'vertex':
                 self.selection_mode = 'face'
-                context.scene.CADView_props.selection_mode = 'face'
+                context.scene.caliper_props.selection_mode = 'face'
             self._clear_measurement()
             self._clear_highlight()
             self._clear_selected_highlight()
@@ -1740,7 +1740,7 @@ class CAD_VIEW_OT_measure(Operator):
         if event.type == 'ONE' and event.value == 'PRESS':
             if not (self.mode == 'angle' and self.selection_mode == 'vertex'):
                 self.selection_mode = 'face'
-                context.scene.CADView_props.selection_mode = 'face'
+                context.scene.caliper_props.selection_mode = 'face'
                 self._clear_measurement()
                 self._clear_highlight()
                 self._update_status_text(context)
@@ -1749,7 +1749,7 @@ class CAD_VIEW_OT_measure(Operator):
 
         if event.type == 'TWO' and event.value == 'PRESS':
             self.selection_mode = 'edge'
-            context.scene.CADView_props.selection_mode = 'edge'
+            context.scene.caliper_props.selection_mode = 'edge'
             self._clear_measurement()
             self._clear_highlight()
             self._update_status_text(context)
@@ -1759,7 +1759,7 @@ class CAD_VIEW_OT_measure(Operator):
         if event.type == 'THREE' and event.value == 'PRESS':
             if self.mode != 'angle':
                 self.selection_mode = 'vertex'
-                context.scene.CADView_props.selection_mode = 'vertex'
+                context.scene.caliper_props.selection_mode = 'vertex'
                 self._clear_measurement()
                 self._clear_highlight()
                 self._update_status_text(context)
@@ -2703,7 +2703,7 @@ class CAD_VIEW_OT_measure(Operator):
 def draw_measure_header(self, context):
     """Draw measure controls in the viewport header during modal operation."""
     layout = self.layout
-    props = context.scene.CADView_props
+    props = context.scene.caliper_props
     layout.label(text="Measure")
     layout.prop(props, "measure_mode", text="Mode")
     layout.prop(props, "selection_mode", text="Selection")

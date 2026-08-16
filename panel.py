@@ -4,7 +4,7 @@ Sidebar panel for the Caliper measure tool.
 The panel piggy-backs on the existing 'Tool' tab in the 3D View
 sidebar so it sits alongside Active Tool / Options / Workspace rather
 than spawning its own tab. It exposes:
-  - a launch button that invokes `bpy.ops.cad_view.measure()`
+  - a launch button that invokes `bpy.ops.caliper.measure()`
   - the three persistent scene-property controls (Mode, Selection,
     Show XYZ) so the user can switch them without opening the
     viewport-header dropdowns while the tool is active.
@@ -13,7 +13,6 @@ The panel only shows when a 3D View area is the active context, so
 it doesn't appear as an empty section elsewhere.
 """
 
-import bpy
 from bpy.types import Panel
 
 
@@ -37,11 +36,11 @@ class CALIPER_PT_main(Panel):
 
     def draw(self, context):
         layout = self.layout
-        props = context.scene.CADView_props
+        props = context.scene.caliper_props
 
         col = layout.column(align=True)
         col.scale_y = 1.4
-        col.operator("cad_view.measure", text="Measure", icon="DRIVER_DISTANCE")
+        col.operator("caliper.measure", text="Caliper", icon="DRIVER_DISTANCE")
 
         layout.separator()
 
