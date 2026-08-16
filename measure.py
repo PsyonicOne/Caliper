@@ -13,7 +13,7 @@ from .common import handlers
 
 # Module-level BVH cache. Keyed by object name (str) ->
 # (BVHRay wrapper, fingerprint) tuple. Cleared on tool exit
-# (RMB/ESC) so memory is released between measure-tool invocations.
+# (RMB/ESC) so memory is released between measure-tool invocations.s
 _BVH_OBJECT_CACHE = {}
 
 
